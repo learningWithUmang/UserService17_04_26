@@ -1,14 +1,15 @@
 package dev.umang.userauthservice_17_04_2026.controllers;
 
-import dev.umang.userauthservice_17_04_2026.dtos.LoginRequestDTO;
-import dev.umang.userauthservice_17_04_2026.dtos.SignupRequestDTO;
-import dev.umang.userauthservice_17_04_2026.dtos.UserDTO;
+import dev.umang.userauthservice_17_04_2026.dtos.*;
+import dev.umang.userauthservice_17_04_2026.exceptions.UnauthorizedException;
 import dev.umang.userauthservice_17_04_2026.models.User;
 import dev.umang.userauthservice_17_04_2026.services.IAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,12 +55,28 @@ public class AuthController {
     public ResponseEntity<UserDTO> login(@RequestBody LoginRequestDTO loginRequestDTO) {
         // Logic to handle user login
         try{
-            User user = authService.login(
+            UserToken userToken = authService.login(
                     loginRequestDTO.getEmail(),
                     loginRequestDTO.getPassword());
-            return new ResponseEntity<>(user.convertToUserDTO(), HttpStatus.OK);
+
+            //Setting the headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.SET_COOKIE, userToken.getToken());
+
+            return ResponseEntity
+                    .ok()
+                    .headers(headers)
+                    .body(userToken.getUser().convertToUserDTO());
         } catch (Exception e){
             throw e;
+        }
+    }
+
+    @PostMapping("/validate-token")
+    public void validateToken(@RequestBody ValidateTokenDto validateTokenDto){
+        Boolean isValid = authService.validateToken(validateTokenDto.getToken());
+        if(!isValid){
+            throw new UnauthorizedException("Invalid token");
         }
     }
 }
