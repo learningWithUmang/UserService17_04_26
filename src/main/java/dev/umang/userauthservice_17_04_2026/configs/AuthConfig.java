@@ -33,4 +33,8 @@ public class AuthConfig {
         MacAlgorithm algorithm = Jwts.SIG.HS256;
         return algorithm.key().build();
     }
+
+    /*
+
+     */
 }
