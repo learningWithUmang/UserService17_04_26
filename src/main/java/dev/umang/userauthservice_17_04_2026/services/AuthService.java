@@ -1,5 +1,7 @@
 package dev.umang.userauthservice_17_04_2026.services;
 
+import dev.umang.userauthservice_17_04_2026.clients.KafkaProducerHelperClient;
+import dev.umang.userauthservice_17_04_2026.dtos.EmailDTO;
 import dev.umang.userauthservice_17_04_2026.dtos.UserToken;
 import dev.umang.userauthservice_17_04_2026.exceptions.IncorrectPasswordException;
 import dev.umang.userauthservice_17_04_2026.exceptions.UserAlreadyExistException;
@@ -14,16 +16,13 @@ import dev.umang.userauthservice_17_04_2026.repositories.UserRepo;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.MacAlgorithm;
-import org.antlr.v4.runtime.misc.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.ObjectMapper;
 
 import javax.crypto.SecretKey;
-import java.lang.reflect.Array;
 import java.util.*;
-import java.util.regex.PatternSyntaxException;
 
 @Service
 public class AuthService implements IAuthService{
@@ -41,6 +40,12 @@ public class AuthService implements IAuthService{
 
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Autowired
+    private KafkaProducerHelperClient kafkaProducerClient;
+
+    @Autowired
+    private ObjectMapper objectMapper;
     @Override
     public User signup(String name, String email, String password) throws UserAlreadyExistException {
         //Check if user with email already exists
@@ -72,6 +77,37 @@ public class AuthService implements IAuthService{
         }
 
         user.setRoles(List.of(roleToBeSet));
+
+        /*
+        Send message to Kafka
+
+        {
+            "eventType":"USER_SIGNUP",
+            "recipient": <email>,
+        }
+         */
+
+        EmailDTO emailDTO = new EmailDTO();
+        emailDTO.setTo(email);
+        emailDTO.setFrom("umangonwork@gmail.com");
+        emailDTO.setSubject("Welcome to our service");
+        emailDTO.setBody("Hi " + name + ", welcome to our service. We are glad to have you on board.");
+        /*
+        Convert the message to a string
+         */
+
+        kafkaProducerClient.sendMessage(
+                "USER_SIGNUP",
+                objectMapper.writeValueAsString(emailDTO));
+        /*
+        {
+            "from":email,
+            "to": email,
+            "subject": "Welcome to our service",
+            "body": "Hi " + name + ", welcome to our service. We are glad to have you on board."
+        }
+         */
+
         return userRepo.save(user);
     }
 

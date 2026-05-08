@@ -14,6 +14,7 @@ import javax.crypto.SecretKey;
 public class AuthConfig {
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
+
         return new BCryptPasswordEncoder();
     }
 
