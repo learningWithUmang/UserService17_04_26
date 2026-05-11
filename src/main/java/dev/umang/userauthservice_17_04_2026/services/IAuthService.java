@@ -10,4 +10,6 @@ public interface IAuthService {
 
     Boolean validateToken(String token);
 
+    User getUserById(Long id);
+
 }

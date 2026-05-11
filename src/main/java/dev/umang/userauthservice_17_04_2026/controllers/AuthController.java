@@ -10,10 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /*
 1. Signup API
@@ -78,6 +75,13 @@ public class AuthController {
         if(!isValid){
             throw new UnauthorizedException("Invalid token");
         }
+    }
+
+    @GetMapping("/user/{id}")
+    public UserDTO getUserById(@PathVariable Long id) {
+        System.out.println("Getting user by id: " + id);
+        User user = authService.getUserById(id);
+        return user.convertToUserDTO();
     }
 }
 

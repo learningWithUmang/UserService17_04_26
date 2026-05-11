@@ -211,6 +211,15 @@ public class AuthService implements IAuthService{
 
     }
 
+    public User getUserById(Long id){
+        Optional<User> optionalUser = userRepo.findById(id);
+        if(optionalUser.isEmpty()){
+            throw new UserNotExistException("User with id " + id + " does not exist");
+        }
+
+        return optionalUser.get();
+    }
+
     /*
     JWT
     Parts-3
